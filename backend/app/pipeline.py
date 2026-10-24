@@ -68,12 +68,14 @@ def build_item(db, p: ParsedLine, confirmed: dict) -> dict:
 
 def analyze(db, text: str, patient, confirmed: dict | None = None, use_llm: bool = False) -> dict:
     notes = []
-    lines = [l for l in re.split(r"[\n;]+", text) if l.strip()]
+    # split on newlines, ';' and on commas that start a new drug ("..., T augmentin"), not "Dolo 650, 1 TDS"
+    sep = r"[\n;]+|,\s*(?!(?:od|bd|bid|tds|tid|qid|qds|hs|sos|prn|stat|after|before|for|x)\b)(?=[A-Za-z])"
+    lines = [l for l in re.split(sep, text) if l and l.strip()]
     if use_llm:
         try:
             lines = llm_normalize(text)
         except Exception as e:  # missing key, rate limit, no network -> regex fallback
-            notes.append(f"LLM parsing unavailable ({type(e).__name__}); used regex parser.")
+            notes.append(f"LLM parsing unavailable ({type(e).__name__}: {str(e)[:200]}); used regex parser.")
     items = [build_item(db, parse_line(l), {k.lower(): v for k, v in (confirmed or {}).items()}) for l in lines]
     alerts, totals = run_checks(items, patient)
     for it in items:

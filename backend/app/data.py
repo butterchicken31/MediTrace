@@ -93,8 +93,12 @@ class MedicineDB:
         scored = {}
         for idx, score in hits:
             n = self.norm[idx]
-            if qalpha and fuzz.WRatio(qalpha, _NUM.sub(" ", n).strip()) < 65:
+            nalpha = _NUM.sub(" ", n).strip()
+            if qalpha and fuzz.WRatio(qalpha, nalpha) < 65:
                 score -= 45  # the name itself must match; a shared strength ('500') is not enough
+            # first word must resemble the candidate's first word ('string' is not 'Strigesic' or 'Dentakind')
+            if qalpha and nalpha and fuzz.ratio(qalpha.split()[0], nalpha.split()[0]) < 70:
+                score -= 30
             if qnums:  # strength digits matter: 'dolo 650' must not match 'dolo 500'
                 score += 8 if qnums <= set(_NUM.findall(n)) else -20
             if n.split()[0] == first:

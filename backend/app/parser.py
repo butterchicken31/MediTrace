@@ -19,7 +19,7 @@ _VOL_RE = re.compile(r"\b(\d+(?:\.\d+)?)\s*(ml|tsp|tbsp|teaspoons?|tablespoons?)
 _QTY_RE = re.compile(r"(1/2|½|half|\d+(?:\.\d+)?)\s*(tabs?|tablets?|caps?|capsules?|puffs?)?\s*$", re.I)
 _FORM_RE = re.compile(
     r"^(?:(tablets?|tabs?|capsules?|caps?|syrup|syp|syr|susp(?:ension)?|inj(?:ection)?|"
-    r"oint(?:ment)?|cream|gel|drops?)\b\.?|([tc])\.)\s*", re.I)
+    r"oint(?:ment)?|cream|gel|drops?)\b\.?|([tc])(?:\.|\s+(?=[A-Za-z]{3})))\s*", re.I)
 _NOISE_RE = re.compile(r"\b(?:pc|ac|after food|before food|after meals?|before meals?|with water|empty stomach)\b", re.I)
 
 
@@ -54,6 +54,7 @@ def _cut(s: str, m: re.Match) -> str:
 
 def parse_line(raw: str) -> ParsedLine:
     s = re.sub(r"^\s*(?:\d+[.)]\s+|[-*•]\s*)", "", raw.strip())
+    s = re.sub(r"([A-Za-z]{3,})(\d)", r"\1 \2", s)  # dolo650 -> dolo 650
     p = ParsedLine(raw=raw.strip(), brand_query="")
     lead = re.match(r"^(\d+(?:\.\d+)?)\s+(?=[A-Za-z])", s)  # '1 Tab Dolo 650 TDS'
     if lead and float(lead.group(1)) <= 10:
@@ -115,15 +116,24 @@ def llm_normalize(text: str) -> list[str]:
     The regex parser still does all dose semantics; the LLM never decides doses or safety."""
     from groq import Groq
     client = Groq(api_key=os.environ["GROQ_API_KEY"])
-    resp = client.chat.completions.create(
-        model=os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile"),
-        response_format={"type": "json_object"}, temperature=0,
-        messages=[
-            {"role": "system", "content":
-                'Extract prescription lines as JSON: {"items":[{"brand":str,"strength":str|null,'
-                '"frequency":"OD|BD|TDS|QID|HS|SOS"|null,"duration_days":int|null}]}. '
-                "Do not infer or add drugs. Output JSON only."},
-            {"role": "user", "content": text}])
+    models = [m for m in (os.environ.get("GROQ_MODEL"), "openai/gpt-oss-120b",
+                          "qwen/qwen3.6-27b", "openai/gpt-oss-20b") if m]
+    last = None
+    for model in models:  # model names churn; fall through until one works
+        try:
+            resp = client.chat.completions.create(
+                model=model, response_format={"type": "json_object"}, temperature=0,
+                messages=[
+                    {"role": "system", "content":
+                        'Extract prescription lines as JSON: {"items":[{"brand":str,"strength":str|null,'
+                        '"frequency":"OD|BD|TDS|QID|HS|SOS"|null,"duration_days":int|null}]}. '
+                        "Do not infer or add drugs. Output JSON only."},
+                    {"role": "user", "content": text}])
+            break
+        except Exception as e:
+            last = e
+    else:
+        raise last
     lines = []
     for it in json.loads(resp.choices[0].message.content)["items"]:
         line = f"{it['brand']} {it.get('strength') or ''} {it.get('frequency') or ''}"
