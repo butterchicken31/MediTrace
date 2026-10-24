@@ -103,7 +103,6 @@ From the repository root:
 .\.venv\Scripts\python.exe -m pytest .\backend\tests -q
 ```
 
-The existing backend test suite has previously completed with **18 passing tests** in the development environment.
 
 ##  Security and Responsible AI
 
