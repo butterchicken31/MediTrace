@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#090d0b" />
+    <meta
+      name="description"
+      content="MediTrace is a prototype prescription review workspace for Indian brand-name medicines."
+    />
+    <title>MediTrace — Prescription safety workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell"></div>
+    <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <script>
+      // Set this object in a deployment config when the real API is available.
+      // Example: window.__MEDITRACE_CONFIG__ = { API_BASE_URL: 'http://localhost:8000' };
+      window.__MEDITRACE_CONFIG__ = {
+  API_BASE_URL: 'http://localhost:8000'
+};
+    </script>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
