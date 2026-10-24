@@ -55,6 +55,7 @@ Create a virtual environment and install the backend dependencies:
 
 ```powershell
 python -m venv .venv
+# for windows
 .\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 ```
 
@@ -65,7 +66,7 @@ If the AI integration requires a Groq API key, configure it through an environme
 Example environment variable name:
 
 ```text
-GROQ_API_KEY=your_api_key_here
+$env:GROQ_API_KEY=your_api_key_here
 ```
 
 Replace the placeholder locally. **Never commit actual API keys, passwords, or other secrets to GitHub.**
@@ -75,6 +76,7 @@ Replace the placeholder locally. **Never commit actual API keys, passwords, or o
 From the repository root:
 
 ```powershell
+# for windows
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --port 8000
 ```
 
@@ -121,13 +123,10 @@ The project is intended for educational demonstration and further development. I
 ##  Team
 
 **Team MediTrace**
-
-| Member |
-|---|---|
-| **Arjun Atroley** (Team Leader)|
-| Swaroop Dudhgaonkar |
-| Mitisha Mahashabde |
-| Tanishq Jain |
+1. Arjun Atroley (Team Leader)
+2. Swaroop Dudhgaonkar
+3. Mitisha Mahashabde
+4. Tanishq Jain
 
 ## Vision
 
