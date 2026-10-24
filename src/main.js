@@ -83,11 +83,13 @@ function renderSidebar() {
   return `
     <aside class="sidebar ${state.mobileMenuOpen ? 'open' : ''}" aria-label="Primary navigation">
       <div class="brand">
-        <div class="brand-mark">${icon('shield', '', 19)}</div>
+        <button class="brand-link" data-action="navigate" data-page="dashboard" type="button" aria-label="Open MediTrace overview">
+          <img class="brand-symbol" src="./assets/meditrace-mark.png" alt="" width="34" height="34" />
         <div class="brand-copy">
           <div class="brand-name">MediTrace</div>
           <div class="brand-subtitle">clinical review workspace</div>
         </div>
+        </button>
       </div>
       <div class="sidebar-label">Workspace</div>
       <nav class="nav-list">
@@ -133,6 +135,10 @@ function renderDashboardPage() {
     <section class="page overview-page">
       <div class="page-header">
         <div class="page-header-copy">
+          <div class="overview-brand-lockup">
+            <img class="brand-wordmark" src="./assets/meditrace-wordmark-dark.png" alt="MediTrace" width="220" height="60" />
+            <span>Prescription safety workspace</span>
+          </div>
           <div class="eyebrow">MediTrace review workspace</div>
           <h1>Start with the prescription.</h1>
           <p class="lead">Enter medicines as written, then review the supported matches, findings, evidence and uncertainty in one place.</p>
@@ -341,7 +347,7 @@ function renderQuickGuide() {
 }
 
 function renderSafetyNote() {
-  return `<div class="safety-note">${icon('shield', '', 17)}<span><strong>Prototype boundary:</strong> MediTrace is a review aid, not a diagnosis or treatment tool. It does not make a prescription safe, and missing data can limit the review.</span></div>`;
+  return `<div class="safety-note">${icon('shield', '', 17)}<span><strong>Prototype boundary:</strong> These results are decision-support demonstrations, not medical advice. Alerts may be incomplete or incorrect; no alert does not mean a prescription is safe. A qualified doctor or pharmacist must make clinical decisions.</span></div>`;
 }
 
 function getDashboardMetrics() {
@@ -853,7 +859,9 @@ function renderResultsPage() {
       ${state.error ? renderErrorBanner(state.error) : ''}
       ${renderStatusPanel(analysis)}
       ${analysis.disclaimer ? `<div class="review-disclaimer">${icon('info', '', 15)}<span>${escapeHtml(analysis.disclaimer)}</span></div>` : ''}
+      ${renderDuplicationSummary(analysis)}
       ${renderResultMetrics(summary)}
+      ${renderSafetyNote()}
 
       <div class="results-layout">
         <section>
@@ -942,19 +950,21 @@ function renderFindingCards(findings) {
 function renderFindingCard(finding, index = 0) {
   const meta = SEVERITY_META[finding.severity] || SEVERITY_META.needs_review;
   const affectedMedicineId = finding.affectedMedicineIds?.[0];
+  const nextStep = finding.action || 'Review this result with a qualified doctor or pharmacist before making any medication decision.';
   return `
     <article class="finding-card tone-${meta.tone} ${index === 0 ? 'primary-finding' : ''}">
       <div class="finding-card-head">
         <div class="finding-card-heading">
           ${index === 0 ? '<span class="finding-priority">Highest priority returned</span>' : ''}
           <span class="badge ${meta.tone}">${icon(meta.icon, '', 11)} ${escapeHtml(meta.label)}</span>
+          ${renderFindingConfidence(finding)}
           <div class="finding-type">${escapeHtml(finding.category.replaceAll('_', ' '))}</div>
           <h3 class="finding-title">${escapeHtml(finding.title)}</h3>
         </div>
         ${finding.isDemo ? '<span class="demo-chip">demo</span>' : ''}
       </div>
       <p class="finding-description">${escapeHtml(finding.description)}</p>
-      ${finding.action ? `<p class="secondary-text tiny" style="margin-top: 10px;"><strong>Suggested next step:</strong> ${escapeHtml(finding.action)}</p>` : ''}
+      <p class="secondary-text tiny finding-next-step"><strong>Suggested next step:</strong> ${escapeHtml(nextStep)}</p>
       <details class="finding-technical">
         <summary>Technical details</summary>
         <div class="finding-details">
@@ -970,6 +980,29 @@ function renderFindingCard(finding, index = 0) {
         ${affectedMedicineId ? `<button class="button button-ghost button-small" data-action="view-medicine" data-medicine-id="${escapeHtml(affectedMedicineId)}" type="button">${icon('clipboard', '', 13)} Medicine details</button>` : ''}
       </div>
     </article>
+  `;
+}
+
+function renderFindingConfidence(finding) {
+  if (finding.isDemo) return '<span class="evidence-badge illustrative">Illustrative demo fixture</span>';
+  if (finding.source?.startsWith('rules.') || finding.source === 'duplicate_check') return '<span class="evidence-badge rule">Rule-supported match</span>';
+  if (finding.source?.startsWith('dataset.')) return '<span class="evidence-badge dataset">Dataset signal — verify</span>';
+  return '<span class="evidence-badge uncertain">Needs verification</span>';
+}
+
+function renderDuplicationSummary(analysis) {
+  const overlaps = analysis.findings.filter((finding) => ['duplicate_ingredient', 'class_duplication'].includes(finding.category));
+  if (!overlaps.length) return '';
+  return `
+    <section class="duplication-summary" aria-label="Potential medication duplication">
+      <div class="duplication-summary-icon">${icon('alert', '', 18)}</div>
+      <div class="duplication-summary-copy">
+        <div class="duplication-summary-heading"><span class="duplication-summary-title">Potential duplication or overlapping therapy</span><span class="badge warning">Human review</span></div>
+        <p>${overlaps.map((finding) => escapeHtml(finding.description)).join(' ')}</p>
+        <div class="duplication-summary-meta">${overlaps.map((finding) => `<span>${icon('clipboard', '', 12)} ${escapeHtml((finding.affectedMedicines || []).join(' · ') || 'Medicines not supplied')}</span>`).join('')}</div>
+        <small>These are rule-supported or illustrative matches, not a clinical conclusion. Similar medicine names alone do not prove duplicate therapy. Verify the complete prescription with a doctor or pharmacist.</small>
+      </div>
+    </section>
   `;
 }
 
