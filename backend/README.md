@@ -42,11 +42,11 @@ Accepted line styles: `T. Augmentin 625 1 BD x 5d`, `Dolo 650 1-0-1`, `Syp Ascor
 
 ## Deploy
 Render (free web service): build `pip install -r requirements.txt`, start
-`uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Or use the Dockerfile on Hugging Face Spaces (port 7860).
-Env vars: `CORS_ORIGINS` (your frontend URL, comma separated; defaults to `*`), `GROQ_API_KEY` (optional),
+`uvicorn app. main: app --host 0.0.0.0 --port $PORT`. Or use the Dockerfile on Hugging Face Spaces (port 7860).
+Env vars: `CORS_ORIGINS` (your frontend URL, comma-separated; defaults to `*`), `GROQ_API_KEY` (optional),
 `DATA_PATH` (optional). RAM use is about 250 MB with the full dataset, so keep the free tier's 512 MB in mind.
 
-## Honest limitations (say these in the pitch)
+## Honest limitations 
 - `rules.py` values are starter values; **a pharmacist must verify them.** Nothing here is validated clinically.
 - The dataset's own `drug_interactions` column looks noisy (e.g. antacids and efavirenz listed against
   ranitidine), so those alerts are downgraded to warning or info and labelled unverified.
