@@ -1,0 +1,10 @@
+{
+  "name": "meditrace-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MediTrace prescription safety checker frontend prototype",
+  "scripts": {
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\serve.ps1",
+    "preview": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\serve.ps1"
+  }
+}
